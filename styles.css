@@ -116,7 +116,7 @@ th {
 
 tr:hover {
     background-color: #f7f4ec;
-    transition: background-color 0.15s;
+    transition: background-color 0.05s;
 }
 
 .download-button {
@@ -137,6 +137,7 @@ tr:hover {
 
 input[type="date" i] {
     font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
 }
 
 .date-inputs {
@@ -151,7 +152,6 @@ input[type="date" i] {
     align-items: center;
     gap: 0.5rem;
 }
-
 
 .date-input-group input[type="date"] {
     border: 1px solid rgba(9,7,4,0.1);
