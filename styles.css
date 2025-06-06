@@ -102,11 +102,11 @@ table {
 }
 
 th, td {
-    padding: 0.75rem;
+    padding: 1rem;
     text-align: left;
     vertical-align: top;
     border-bottom: 1px solid rgba(9,7,4,0.1);
-    min-width: 6.75rem;
+    min-width: 7.25rem;
 }
 
 th {
