@@ -1,22 +1,23 @@
 // Инициализация PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// Функция для преобразования строки с числом в float
+// Функция для преобразования строки с числом в float (адаптировано из Python)
 function parseAmount(amountStr) {
-    amountStr = amountStr.trim();
-    console.log('Парсинг суммы:', amountStr);
+    if (!amountStr) return null;
     
-    // Если число в формате "30,000.00"
+    amountStr = amountStr.trim();
+    
+    // Если число в формате "30,000.00" (запятая как разделитель тысяч, точка как десятичный разделитель)
     if (/^\d+,\d{3}\.\d{2}$/.test(amountStr)) {
         return parseFloat(amountStr.replace(',', ''));
     }
     
-    // Если число в формате "20.00"
+    // Если число в формате "20.00" (точка как десятичный разделитель)
     if (/^\d+\.\d{2}$/.test(amountStr)) {
         return parseFloat(amountStr);
     }
     
-    // Если число в формате "20,00" или "30000,00"
+    // Если число в формате "20,00" (запятая как десятичный разделитель)
     if (/^\d+,\d{2}$/.test(amountStr)) {
         return parseFloat(amountStr.replace(',', '.'));
     }
@@ -26,12 +27,14 @@ function parseAmount(amountStr) {
         return parseFloat(amountStr);
     }
     
-    throw new Error(`Неизвестный формат числа: ${amountStr}`);
+    // Общий случай: удаляем пробелы и заменяем запятую на точку
+    return parseFloat(amountStr.replace(/\s/g, '').replace(',', '.'));
 }
 
 // Функция для преобразования строки с датой в объект Date
 function parseDate(dateStr) {
     console.log('Парсинг даты:', dateStr);
+    // дд.мм.гг или дд.мм.гггг
     if (/^\d{2}\.\d{2}\.\d{2}$/.test(dateStr)) {
         const [day, month, year] = dateStr.split('.');
         return new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -43,7 +46,16 @@ function parseDate(dateStr) {
 
 // Функция для форматирования даты в YYYY-MM-DD
 function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatAmount(amount) {
+    if (amount === null || amount === undefined || amount === '') return '';
+    // Форматируем число с двумя знаками после запятой
+    return parseFloat(amount).toFixed(2).replace('.', ',');
 }
 
 let allTransactions = []; // Глобальная переменная для хранения всех транзакций
@@ -65,7 +77,7 @@ function filterTransactionsByDate(transactions, startDate, endDate) {
     });
 }
 
-// Функция для извлечения транзакций из PDF
+// Функция для извлечения транзакций из PDF (адаптировано из Python логики)
 async function extractTransactionsFromPdf(pdfFile) {
     console.log('Начинаем обработку PDF файла...');
     const arrayBuffer = await pdfFile.arrayBuffer();
@@ -74,26 +86,26 @@ async function extractTransactionsFromPdf(pdfFile) {
 
     console.log('Количество страниц в PDF:', pdf.numPages);
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-        console.log(`Обработка страницы ${i}...`);
-        const page = await pdf.getPage(i);
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        console.log(`Обработка страницы ${pageNum}...`);
+        const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         
-        // Получаем все текстовые элементы с их позициями
+        // Извлекаем текст как в Python скрипте - строка за строкой
+        const lines = [];
         const textItems = textContent.items.map(item => ({
             text: item.str,
             x: item.transform[4],
             y: item.transform[5]
         }));
 
-        // Сортируем элементы по y-координате (сверху вниз)
+        // Сортируем по Y координате (сверху вниз)
         textItems.sort((a, b) => b.y - a.y);
 
-        // Группируем элементы в строки
-        const lines = [];
+        // Группируем в строки
         let currentLine = [];
         let currentY = null;
-        const yThreshold = 5; // Порог для определения одной строки
+        const yThreshold = 5;
 
         textItems.forEach(item => {
             if (currentY === null) {
@@ -115,110 +127,115 @@ async function extractTransactionsFromPdf(pdfFile) {
             lines.push(currentLine.join(' '));
         }
 
-        console.log('Строки на странице:', lines.length);
-        console.log('Первые 10 строк:', lines.slice(0, 10));
+        console.log(`Страница ${pageNum}: найдено ${lines.length} строк`);
 
-        for (let j = 0; j < lines.length; j++) {
-            const line = lines[j].trim();
+        // ОТЛАДКА: Выводим все строки для анализа паттернов
+        console.log(`=== ОТЛАДКА СТРАНИЦЫ ${pageNum} ===`);
+        lines.forEach((line, index) => {
+            // Ищем строки с номерами транзакций
+            if (/\d+\.\s+\d{2}\.\d{2}\.\d{2,4}/.test(line) || /Nalog|Kartica/.test(line)) {
+                console.log(`Строка ${index}: "${line}"`);
+            }
+        });
+        console.log('=== КОНЕЦ ОТЛАДКИ ===');
+
+        // Обрабатываем строки как в Python скрипте
+        let i = 0;
+        while (i < lines.length) {
+            const line = lines[i].trim();
             
-            // Обработка Nalog транзакций
-            const nalogMatch = line.match(/(\d+\.)\s+(\d{2}\.\d{2}\.\d{2,4})\s+Nalog:/);
+            // Ищем Nalog транзакции: [баланс] [сумма] номер. дата Nalog: ...
+            const nalogMatch = line.match(/^([\d\.,]+)\s+([\d\.,]+)\s+(\d+)\.\s+(\d{2}\.\d{2}\.\d{2,4})\s+Nalog:\s*(.*)$/);
             if (nalogMatch) {
-                console.log('Найдена Nalog транзакция:', line);
+                console.log(`Найдена Nalog транзакция: ${line}`);
                 try {
-                    const date = parseDate(nalogMatch[2]);
-                    // Ищем сумму в строке или в следующих строках
-                    let amount = null;
+                    const [, balance, amount, transactionNumber, dateStr, operation] = nalogMatch;
+                    const date = parseDate(dateStr);
+                    const transactionAmount = parseAmount(amount);
+                    
+                    // Описание — 1-2 строки после, если не начинается с номера новой транзакции
                     let payee = '';
-                    
-                    // Сначала проверяем текущую строку
-                    const amountMatch = line.match(/(\d+[.,]\d{2})\s+(\d+[.,]\d{2})/);
-                    if (amountMatch) {
-                        amount = parseAmount(amountMatch[1]);
-                        console.log('Сумма найдена в текущей строке:', amount);
-                    }
-                    
-                    // Получаем описание из следующих строк
-                    for (let k = 1; k <= 3; k++) {
-                        if (j + k < lines.length) {
-                            const nextLine = lines[j + k].trim();
-                            if (!/^\d+\.\s+\d{2}\.\d{2}\.\d{2,4}/.test(nextLine)) {
-                                payee += nextLine + ' ';
-                                // Проверяем, есть ли сумма в этой строке
-                                const nextAmountMatch = nextLine.match(/(\d+[.,]\d{2})\s+(\d+[.,]\d{2})/);
-                                if (nextAmountMatch && amount === null) {
-                                    amount = parseAmount(nextAmountMatch[1]);
-                                    console.log('Сумма найдена в следующей строке:', amount);
-                                }
+                    const descLines = [];
+                    for (let j = 1; j <= 3; j++) {
+                        if (i + j < lines.length) {
+                            const nextLine = lines[i + j].trim();
+                            if (!/^[\d\.,]+\s+[\d\.,]+\s+\d+\.\s+\d{2}\.\d{2}\.\d{2,4}/.test(nextLine) &&
+                                !nextLine.includes('Poziv za reklamaciju') &&
+                                !nextLine.includes('Datum prijema') &&
+                                nextLine.length > 0) {
+                                descLines.push(nextLine);
                             }
                         }
                     }
-                    payee = payee.trim();
-                    console.log('Описание транзакции:', payee);
-
-                    if (amount !== null) {
-                        transactions.push({
-                            Date: formatDate(date),
-                            Payee: payee,
-                            Category: '',
-                            Memo: '',
-                            Outflow: payee.toLowerCase().includes('uplata') ? '' : amount.toFixed(2).replace('.', ','),
-                            Inflow: payee.toLowerCase().includes('uplata') ? amount.toFixed(2).replace('.', ',') : ''
-                        });
-                        console.log('Транзакция добавлена:', transactions[transactions.length - 1]);
+                    payee = descLines.join(' ').trim();
+                    
+                    // Определяем Inflow/Outflow
+                    let inflow = '';
+                    let outflow = '';
+                    if (payee.toLowerCase().includes('uplata')) {
+                        inflow = formatAmount(transactionAmount);
+                    } else {
+                        outflow = formatAmount(transactionAmount);
                     }
-                } catch (e) {
-                    console.error('Ошибка при обработке Nalog:', line, e);
+                    
+                    transactions.push({
+                        Date: formatDate(date),
+                        Payee: payee || 'Банковский перевод',
+                        Category: '',
+                        Memo: '',
+                        Outflow: outflow,
+                        Inflow: inflow
+                    });
+                    console.log(`Добавлена Nalog транзакция: ${payee} - ${transactionAmount}`);
+                    
+                } catch (error) {
+                    console.error(`Ошибка при обработке Nalog: ${line}`, error);
                 }
+                i++;
                 continue;
             }
-
-            // Обработка Kartica транзакций
-            const karticaMatch = line.match(/(\d+\.)\s+(\d{2}\.\d{2}\.\d{4})\s+Kartica\s*:/);
+            
+            // Ищем Kartica транзакции: [баланс] [сумма] номер. дата Kartica : ...
+            const karticaMatch = line.match(/^([\d\.,]+)\s+([\d\.,]+)\s+(\d+)\.\s+(\d{2}\.\d{2}\.\d{4})\s+Kartica\s*:\s*(.*)$/);
             if (karticaMatch) {
-                console.log('Найдена Kartica транзакция:', line);
+                console.log(`Найдена Kartica транзакция: ${line}`);
                 try {
-                    const date = parseDate(karticaMatch[2]);
+                    const [, balance, amount, transactionNumber, dateStr, cardInfo] = karticaMatch;
+                    const date = parseDate(dateStr);
+                    const transactionAmount = parseAmount(amount);
                     let payee = '';
-                    let amount = null;
-
-                    // Получаем название магазина из следующей строки
-                    if (j + 1 < lines.length) {
-                        payee = lines[j + 1].trim();
-                        console.log('Название магазина:', payee);
-                    }
-
-                    // Ищем сумму в строке с "Iznos transakcije"
-                    for (let k = 1; k <= 5; k++) {
-                        if (j + k < lines.length) {
-                            const nextLine = lines[j + k].trim();
-                            const amountMatch = nextLine.match(/Iznos transakcije:\s*([\d\.,]+)/);
-                            if (amountMatch) {
-                                amount = parseAmount(amountMatch[1]);
-                                console.log('Найдена сумма в Iznos transakcije:', amount);
-                                break;
-                            }
+                    
+                    // Следующая строка — название магазина
+                    if (i + 1 < lines.length) {
+                        const nextLine = lines[i + 1].trim();
+                        if (!nextLine.includes('Poziv za reklamaciju') && 
+                            !nextLine.includes('Datum prijema') &&
+                            !/^[\d\.,]+\s+[\d\.,]+\s+\d+\.\s+\d{2}\.\d{2}\.\d{4}/.test(nextLine)) {
+                            payee = nextLine;
                         }
                     }
-
-                    if (amount !== null) {
-                        transactions.push({
-                            Date: formatDate(date),
-                            Payee: payee,
-                            Category: '',
-                            Memo: '',
-                            Outflow: amount.toFixed(2).replace('.', ','),
-                            Inflow: ''
-                        });
-                        console.log('Транзакция добавлена:', transactions[transactions.length - 1]);
-                    }
-                } catch (e) {
-                    console.error('Ошибка при обработке Kartica:', line, e);
+                    
+                    transactions.push({
+                        Date: formatDate(date),
+                        Payee: payee || 'Операция по карте',
+                        Category: '',
+                        Memo: '',
+                        Outflow: formatAmount(transactionAmount),
+                        Inflow: ''
+                    });
+                    console.log(`Добавлена Kartica транзакция: ${payee} - ${transactionAmount}`);
+                    
+                } catch (error) {
+                    console.error(`Ошибка при обработке Kartica: ${line}`, error);
                 }
+                i++;
+                continue;
             }
+            
+            i++;
         }
     }
-
+    
     console.log('Всего найдено транзакций:', transactions.length);
     return transactions;
 }
@@ -228,6 +245,7 @@ function displayTransactions(transactions) {
     console.log('Отображение транзакций в таблице:', transactions);
     const tbody = document.querySelector('#transactions-table tbody');
     const countElement = document.getElementById('transactions-count');
+    const tableContainer = document.querySelector('.table-container');
     tbody.innerHTML = '';
 
     // Отображаем количество транзакций
@@ -238,14 +256,55 @@ function displayTransactions(transactions) {
     document.getElementById('transactions-count').classList.remove('hidden');
     document.getElementById('downloadCsv').classList.remove('hidden');
 
-    // Если есть транзакции, показываем таблицу
+    // Если есть транзакции, показываем таблицу с анимацией
     if (transactions.length > 0) {
-        document.querySelector('.table-container').classList.remove('hidden');
+        // Если таблица скрыта, показываем её с анимацией
+        if (tableContainer.classList.contains('hidden')) {
+            tableContainer.classList.remove('hidden');
+            
+            // Анимация появления
+            tableContainer.animate([
+                {
+                    opacity: 0,
+                    transform: 'translateY(32px)'
+                },
+                {
+                    opacity: 1,
+                    transform: 'translateY(0)'
+                }
+            ], {
+                duration: 133,
+                delay: 0,
+                easing: 'ease-in-out',
+                fill: 'forwards'
+            });
+        }
     } else {
-        document.querySelector('.table-container').classList.add('hidden');
+        // Анимация скрытия перед добавлением класса hidden
+        if (!tableContainer.classList.contains('hidden')) {
+            tableContainer.animate([
+                {
+                    opacity: 1,
+                    transform: 'translateY(0) scale(1)',
+                    filter: 'blur(0px)'
+                },
+                {
+                    opacity: 0,
+                    transform: 'translateY(-20px) scale(0.95)',
+                    filter: 'blur(3px)'
+                }
+            ], {
+                duration: 400,
+                easing: 'cubic-bezier(0.55, 0.085, 0.68, 0.53)',
+                fill: 'forwards'
+            }).finished.then(() => {
+                tableContainer.classList.add('hidden');
+            });
+        }
     }
 
-    transactions.forEach(transaction => {
+    // Добавляем строки в таблицу
+    transactions.forEach((transaction, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${transaction.Date}</td>
@@ -254,6 +313,25 @@ function displayTransactions(transactions) {
             <td>${transaction.Inflow}</td>
         `;
         tbody.appendChild(row);
+        
+        // Анимация появления строк с небольшой задержкой
+            // if (transactions.length > 0) {
+            //     row.animate([
+            //         {
+            //             opacity: 0,
+            //             transform: 'translateY(16px)'
+            //         },
+            //         {
+            //             opacity: 1,
+            //             transform: 'translateX(0)'
+            //         }
+            //     ], {
+            //         duration: 300,
+            //         delay: index * 100, // Задержка для каждой строки
+            //         easing: 'ease-in-out',
+            //         fill: 'forwards'
+            //     });
+            // }
     });
 }
 
@@ -354,4 +432,24 @@ document.getElementById('endDate').addEventListener('change', applyDateFilter);
 // Обновляем обработчик для кнопки скачивания CSV
 document.getElementById('downloadCsv').addEventListener('click', () => {
     downloadCsv(allTransactions);
-}); 
+});
+
+// Можно добавить анимацию загрузки
+function showLoadingAnimation(tableContainer) {
+    return tableContainer.animate([
+        { opacity: 0.5, transform: 'scale(0.98)' },
+        { opacity: 0.7, transform: 'scale(1.01)' },
+        { opacity: 0.5, transform: 'scale(0.98)' }
+    ], {
+        duration: 1000,
+        iterations: Infinity,
+        direction: 'alternate'
+    });
+}
+
+// Остановить анимацию загрузки
+function stopLoadingAnimation(animation) {
+    if (animation) {
+        animation.cancel();
+    }
+}

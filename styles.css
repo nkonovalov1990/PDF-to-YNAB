@@ -97,6 +97,8 @@ h1 {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 16px 16px rgba(9,7,4,0.1);
+    opacity: 0;
+    transform: 'translateY(32px)';
 }
 
 table {
