@@ -231,7 +231,7 @@ function displayTransactions(transactions) {
     tbody.innerHTML = '';
 
     // Отображаем количество транзакций
-    countElement.textContent = `Found transactions: ${transactions.length}`;
+    countElement.textContent = `${transactions.length} transactions`;
 
     // Показываем элементы управления
     document.querySelector('.date-filter').classList.remove('hidden');
