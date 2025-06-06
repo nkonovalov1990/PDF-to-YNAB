@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to YNAB CSV converter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="font-IBM-Plex/plex-sans/IBM-Plex-Sans.css">
+    <link rel="stylesheet" href="font-IBM-Plex/plex-mono/IBM-Plex-Mono.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF to YNAB CSV converter</h1>
+        <div class="controls-section">
+            <label for="pdfFile" class="file-input-label button">
+                Upload PDF file
+                <input type="file" id="pdfFile" accept=".pdf" />
+            </label>
+            <div class="date-filter hidden">
+                <div class="date-inputs">
+                    <div class="date-input-group">
+                        <input type="date" id="startDate" class="button">
+                    </div>
+                    <span>—</span>
+                    <div class="date-input-group">
+                        <input type="date" id="endDate" class="button">
+                    </div>
+                </div>
+            </div>
+            <div id="transactions-count" class="transactions-count hidden"></div>
+            <button id="downloadCsv" class="download-button button hidden">Download CSV</button>
+        </div>
+
+        <div id="preview-section" class="hidden preview-section">
+            <div class="table-container hidden">
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Payee</th>
+                            <th class="hidden">Category</th>
+                            <th class="hidden">Memo</th>
+                            <th>Outflow</th>
+                            <th>Inflow</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
