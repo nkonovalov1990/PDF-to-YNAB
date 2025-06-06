@@ -1,3 +1,6 @@
+/* ========================================
+   ПЕРЕМЕННЫЕ И СБРОС СТИЛЕЙ
+   ======================================== */
 :root {
     font-family: 'IBM Plex Mono', sans-serif;
 }
@@ -8,6 +11,9 @@
     box-sizing: border-box;
 }
 
+/* ========================================
+   БАЗОВЫЕ ЭЛЕМЕНТЫ
+   ======================================== */
 body {
     font-family: 'IBM Plex Mono', sans-serif;
     font-size: 14px;
@@ -16,13 +22,16 @@ body {
     background-color: #FDFCFA;
 }
 
+h1 {
+    font-size: 2rem;
+    line-height: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.75rem;
+}
+
 input {
     font-size: 14px;
     font-family: 'IBM Plex Mono', sans-serif;
-}
-
-input[type="file"] {
-    display: none;
 }
 
 button {
@@ -34,13 +43,22 @@ button {
     align-items: center;
 }
 
-h1 {
-    font-size: 2rem;
-    line-height: 2rem;
-    font-weight: 600;
-    margin-bottom: 1.75rem;
+/* ========================================
+   ОБЩИЕ КЛАССЫ
+   ======================================== */
+.button {
+    padding: 0.75rem 1.25rem;
+    border-radius: 4px;
+    border: none;
 }
 
+.hidden {
+    display: none;
+}
+
+/* ========================================
+   МАКЕТ И КОНТЕЙНЕРЫ
+   ======================================== */
 .container {
     display: flex;
     flex-direction: column;
@@ -63,13 +81,21 @@ h1 {
     flex-direction: column;
 }
 
-.button {
-    padding: 0.75rem 1.25rem;
-    border-radius: 4px;
-    border: none;
+.before-table {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Кнопка загрузки PDF */
+/* ========================================
+   КОМПОНЕНТЫ ФОРМЫ
+   ======================================== */
+input[type="file"] {
+    display: none;
+}
+
 .file-input-label {
     display: inline-block;
     background-color: rgba(23,18,9,0.6);
@@ -83,14 +109,47 @@ h1 {
     background-color: rgba(23,18,9,0.8);
 }
 
-.before-table {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
+.download-button {
+    font-family: 'IBM Plex Mono', sans-serif;
+    background-color: rgba(23,18,9,1);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.15s;
 }
 
+.download-button:hover {
+    background-color: rgba(23,18,9,0.8);
+}
+
+/* ========================================
+   КОМПОНЕНТЫ ДАТА
+   ======================================== */
+input[type="date" i] {
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+}
+
+.date-inputs {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-input-group input[type="date"] {
+    border: 1px solid rgba(9,7,4,0.1);
+    padding: 8.5px 1rem;
+}
+
+/* ========================================
+   КОМПОНЕНТЫ ТАБЛИЦЫ
+   ======================================== */
 .table-container {
     margin: 20px 0;
     overflow-x: auto;
@@ -127,43 +186,4 @@ tr:hover {
 
 .amount-column {
     text-align: right;
-}
-
-.download-button {
-    font-family: 'IBM Plex Mono', sans-serif;
-    background-color: rgba(23,18,9,1);
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-
-.download-button:hover {
-    background-color: rgba(23,18,9,0.8);
-}
-
-.hidden {
-    display: none;
-}
-
-input[type="date" i] {
-    font-family: 'IBM Plex Mono', monospace;
-    cursor: pointer;
-}
-
-.date-inputs {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 1rem;
-}
-
-.date-input-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.date-input-group input[type="date"] {
-    border: 1px solid rgba(9,7,4,0.1);
-    padding: 8.5px 1rem;
 }
