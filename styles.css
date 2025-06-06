@@ -71,7 +71,7 @@ h1 {
     background-color: rgba(23,18,9,0.6);
     color: white;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.15s;
     width: fit-content;
 }
 
@@ -116,6 +116,7 @@ th {
 
 tr:hover {
     background-color: #f7f4ec;
+    transition: background-color 0.15s;
 }
 
 .download-button {
@@ -123,7 +124,7 @@ tr:hover {
     background-color: rgba(23,18,9,1);
     color: white;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.15s;
 }
 
 .download-button:hover {
