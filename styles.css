@@ -125,6 +125,10 @@ tr:hover {
     transition: background-color 0.05s;
 }
 
+.amount-column {
+    text-align: right;
+}
+
 .download-button {
     font-family: 'IBM Plex Mono', sans-serif;
     background-color: rgba(23,18,9,1);

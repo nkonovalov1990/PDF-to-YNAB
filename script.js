@@ -309,8 +309,8 @@ function displayTransactions(transactions) {
         row.innerHTML = `
             <td>${transaction.Date}</td>
             <td>${transaction.Payee}</td>
-            <td>${transaction.Outflow}</td>
-            <td>${transaction.Inflow}</td>
+            <td class="amount-column">${transaction.Outflow}</td>
+            <td class="amount-column">${transaction.Inflow}</td>
         `;
         tbody.appendChild(row);
         
