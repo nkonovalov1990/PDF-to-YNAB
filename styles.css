@@ -154,6 +154,6 @@ input[type="date" i] {
 
 
 .date-input-group input[type="date"] {
-    border: 1px solid #ddd;
-    padding: 9px 1rem;
+    border: 1px solid rgba(9,7,4,0.1);
+    padding: 8.5px 1rem;
 }
