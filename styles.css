@@ -28,6 +28,10 @@ input[type="file"] {
 button {
     font-size: 14px;
     font-family: 'IBM Plex Mono', sans-serif;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 h1 {
